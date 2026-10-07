@@ -91,25 +91,25 @@ def render(analysis_dir: Path, output: Path) -> None:
     plt.rcParams.update(
         {
             "font.family": "DejaVu Sans",
-            "font.size": 10.5,
-            "axes.titlesize": 13,
-            "axes.labelsize": 11,
-            "xtick.labelsize": 10,
-            "ytick.labelsize": 10,
-            "legend.fontsize": 10,
+            "font.size": 13,
+            "axes.titlesize": 15,
+            "axes.labelsize": 13,
+            "xtick.labelsize": 12,
+            "ytick.labelsize": 12,
+            "legend.fontsize": 12,
         }
     )
     fig, (ax_matrix, ax_stress) = plt.subplots(
         1,
         2,
-        figsize=(12.0, 4.15),
+        figsize=(10.8, 4.8),
         gridspec_kw={"width_ratios": [1.03, 1.0]},
     )
 
     cmap = ListedColormap([ORANGE, "#F3F3F3", BLUE])
     norm = BoundaryNorm([-1.5, -0.5, 0.5, 1.5], cmap.N)
     ax_matrix.imshow(preference, cmap=cmap, norm=norm, aspect="auto")
-    ax_matrix.set_title("(a) Point preference depends on protocol", loc="left", weight="bold")
+    ax_matrix.set_title("(a) Protocol comparison", loc="left", weight="bold")
     ax_matrix.set_xticks(range(3), PROTOCOL_LABELS)
     row_labels = [
         f"{TASK_LABELS[task]}  {METRIC_LABELS[metric]}"
@@ -165,8 +165,8 @@ def render(analysis_dir: Path, output: Path) -> None:
             label=label,
         )
     ax_stress.axhline(0, color="#555555", linewidth=1.2, linestyle="--")
-    ax_stress.set_title("(b) Repetition response reverses by task", loc="left", weight="bold")
-    ax_stress.set_xlabel("Requested fraction of eligible visits (%)")
+    ax_stress.set_title("(b) Repetition sensitivity", loc="left", weight="bold")
+    ax_stress.set_xlabel("Requested eligible visits (%)")
     ax_stress.set_ylabel(r"Raw - Era mean $|\Delta p|$ ($\times 10^{-3}$)")
     ax_stress.set_xticks([25, 50, 100])
     ax_stress.set_xlim(19, 106)
@@ -177,7 +177,7 @@ def render(analysis_dir: Path, output: Path) -> None:
     ax_stress.spines["top"].set_visible(False)
     ax_stress.spines["right"].set_visible(False)
 
-    fig.subplots_adjust(left=0.14, right=0.99, top=0.89, bottom=0.24, wspace=0.38)
+    fig.subplots_adjust(left=0.17, right=0.99, top=0.89, bottom=0.24, wspace=0.62)
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)

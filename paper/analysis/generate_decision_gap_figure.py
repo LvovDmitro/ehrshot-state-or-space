@@ -44,18 +44,18 @@ def render(output: Path, analysis_dir: Path) -> None:
     plt.rcParams.update(
         {
             "font.family": "DejaVu Sans",
-            "font.size": 10.5,
-            "axes.titlesize": 13,
-            "axes.labelsize": 11,
-            "xtick.labelsize": 10,
-            "ytick.labelsize": 10,
+            "font.size": 13,
+            "axes.titlesize": 15,
+            "axes.labelsize": 13,
+            "xtick.labelsize": 12,
+            "ytick.labelsize": 12,
         }
     )
 
     fig, (ax_effect, ax_set) = plt.subplots(
         1,
         2,
-        figsize=(13.2, 4.55),
+        figsize=(10.8, 4.8),
         gridspec_kw={"width_ratios": [1.65, 1.0]},
     )
 
@@ -85,7 +85,7 @@ def render(output: Path, analysis_dir: Path) -> None:
     ax_effect.set_xlim(-14.5, 25.8)
     ax_effect.set_xlabel("Oriented effect relative to Raw (%)")
     ax_effect.set_title(
-        "(a) Point estimates agree; paired uncertainty remains",
+        "(a) Primary metric contrasts",
         loc="left",
         weight="bold",
         y=1.15,
@@ -94,7 +94,7 @@ def render(output: Path, analysis_dir: Path) -> None:
     ax_effect.text(
         0,
         1.055,
-        "All 10 paired 95% CIs include zero",
+        "Point estimate and paired 95% interval",
         transform=ax_effect.transAxes,
         color="#666666",
     )
@@ -132,21 +132,21 @@ def render(output: Path, analysis_dir: Path) -> None:
         ax_set.text(
             shared + specific / 2,
             idx,
-            f"{specific:.1f}%\nspecific",
+            f"{specific:.1f}%",
             ha="center",
             va="center",
             color="white",
             weight="bold",
-            fontsize=9.0,
+            fontsize=11.0,
             linespacing=0.85,
         )
     ax_set.set_yticks(y_set, [row[0] for row in set_rows])
     ax_set.invert_yaxis()
     ax_set.set_xlim(0, 104)
     ax_set.set_xticks([0, 20, 40, 60, 80, 100])
-    ax_set.set_xlabel("Share of each top-decile episode set (%)")
+    ax_set.set_xlabel("Share of top-decile set (%)")
     ax_set.set_title(
-        "(b) Top-decile prioritization sets differ",
+        "(b) Selected-set overlap",
         loc="left",
         weight="bold",
         y=1.15,
@@ -155,9 +155,9 @@ def render(output: Path, analysis_dir: Path) -> None:
     ax_set.text(
         0,
         1.055,
-        "Gray: shared  |  Orange: representation-specific",
+        "Shared and representation-specific",
         transform=ax_set.transAxes,
-        color="#666666",
+        color="#666666", fontsize=10,
     )
     ax_set.grid(axis="x", color="#E0E0E0", linewidth=0.8)
     ax_set.set_axisbelow(True)
@@ -166,7 +166,7 @@ def render(output: Path, analysis_dir: Path) -> None:
     ax_set.spines["right"].set_visible(False)
     ax_set.spines["left"].set_visible(False)
 
-    fig.subplots_adjust(left=0.125, right=0.995, top=0.78, bottom=0.20, wspace=0.34)
+    fig.subplots_adjust(left=0.16, right=0.99, top=0.78, bottom=0.20, wspace=0.55)
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)

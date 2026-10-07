@@ -1,21 +1,13 @@
-# Rights and third-party materials
+# Licensing and Data Access
 
-The original code was authored by Polina Korobeinikova and published at
-https://github.com/poinka/ehrshot-state-or-space without an explicit software
-license. This maintained fork preserves attribution and history. It does not
-retroactively grant a new license to the original code. Public availability is
-not a blanket permission for reuse; obtain appropriate permission before
-redistribution or reuse beyond applicable law and platform terms.
+A software license has not yet been assigned to this repository. Please obtain
+permission from the research institution before reusing or redistributing the
+code beyond applicable law and GitHub's platform terms.
 
-No new blanket software license has been assigned to this release. Licensing
-of the complete project remains an explicit institutional decision.
+EHRSHOT data are governed separately by the benchmark's Credentialed Health
+Data License and require authorized access. This repository includes code and
+aggregate results; it does not distribute medical records, patient-level
+predictions, or model checkpoints.
 
-See [GitHub's licensing documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository)
-for the distinction between viewing/forking a public repository and assigning
-a software reuse license.
-
-The official NeurIPS style, if included in paper/source, retains its original
-license notice. EHRSHOT records, row-level predictions, patient identifiers,
-and checkpoints are not included. Access to EHRSHOT is governed by its
-Credentialed Health Data License. EHRSHOT and MEDS upstream code have their
-own Apache-2.0 licenses; this does not license the clinical data or this fork.
+EHRSHOT and MEDS dependencies retain their own licenses. These licenses do not
+grant rights to this repository's code or to the clinical data.

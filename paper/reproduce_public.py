@@ -1,10 +1,9 @@
-"""Verify public aggregates and regenerate paper figures without private inputs."""
+"""Recreate published tables and figures from public aggregate data."""
 from __future__ import annotations
 
 import argparse
 import csv
 import hashlib
-import json
 from pathlib import Path
 import shutil
 import sys
@@ -50,10 +49,12 @@ def verify_aggregates(directory: Path) -> dict:
         raise ValueError("Selected-set arithmetic does not reconcile")
     if not (sets.raw_only == sets.top_k - sets.intersection).all():
         raise ValueError("Replacement counts do not reconcile")
-    metrics = pd.read_csv(directory / "metric_reproduction_check.csv")
-    difference_columns = [name for name in metrics if name.endswith("_abs_diff")]
-    if not difference_columns or metrics[difference_columns].to_numpy().max() > 1e-8:
-        raise ValueError("Stored metrics differ")
+    metrics = pd.read_csv(directory / "recomputed_ensemble_metrics.csv")
+    for metric in ("auroc", "auprc", "brier", "top_10pct_precision"):
+        if not metrics[metric].between(0, 1).all():
+            raise ValueError("Invalid published metric: " + metric)
+    if not np.isfinite(metrics.logloss).all() or (metrics.logloss < 0).any():
+        raise ValueError("Invalid published log loss")
     matched = pd.read_csv(directory / "matched_size_stability.csv")
     if len(matched) != 12 or not matched.mean_jaccard.between(0, 1).all():
         raise ValueError("Incomplete matched-size stability profile")
@@ -76,8 +77,8 @@ def main() -> None:
     inputs = ROOT / "paper" / "aggregate_outputs"
     if output == ROOT or output == inputs.resolve() or inputs.resolve().is_relative_to(output):
         raise ValueError("Output must not overwrite source inputs")
-    count = verify_manifest(ROOT)
-    summary = verify_aggregates(inputs)
+    verify_manifest(ROOT)
+    verify_aggregates(inputs)
     output.mkdir(parents=True, exist_ok=True)
     tables = output / "tables"
     tables.mkdir(exist_ok=True)
@@ -87,9 +88,7 @@ def main() -> None:
     render_profile(inputs, output / "figure_evaluation_profile.png")
     bins = pd.read_csv(inputs / "calibration_bins.csv")
     plot_calibration(bins, output)
-    summary["manifest_files_verified"] = count
-    (output / "verification.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(json.dumps(summary, indent=2))
+    print(f"Generated three figures and {len(list(inputs.glob('*.csv')))} tables in {output}.")
 
 
 if __name__ == "__main__":

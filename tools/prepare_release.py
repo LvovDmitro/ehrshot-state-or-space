@@ -11,8 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 TEXT = {".py", ".sh", ".csv", ".json", ".md", ".txt", ".cff", ".tex", ".bib", ".yaml", ".yml", ".example"}
-EXCLUDED = {"RELEASE_MANIFEST.csv", "PROJECT_MANIFEST.json", "SHA256SUMS.txt",
-            "public_results/SHA256SUMS.txt"}
+EXCLUDED = {"RELEASE_MANIFEST.csv"}
 TOKENS = [re.compile(r"github_pat_[A-Za-z0-9_]{30,}"),
           re.compile(r"gh[pousr]_[A-Za-z0-9]{30,}"),
           re.compile(r"AKIA[A-Z0-9]{16}"),
@@ -77,15 +76,6 @@ def main():
         writer = csv.DictWriter(handle, fieldnames=["relative_path", "sha256", "bytes"], lineterminator="\n")
         writer.writeheader()
         writer.writerows(entries)
-    (ROOT / "PROJECT_MANIFEST.json").write_text(json.dumps({
-        "release": "camera-ready-2026-10-07-r2",
-        "original_commit": "9831154370cde4b4ae173420b57704f55abd0c68",
-        "files": entries}, indent=2) + "\n", encoding="utf-8", newline="\n")
-    (ROOT / "SHA256SUMS.txt").write_text("".join(
-        f"{entry['sha256']}  {entry['relative_path']}\n" for entry in entries), encoding="utf-8", newline="\n")
-    legacy = [entry for entry in entries if entry["relative_path"].startswith("public_results/")]
-    (ROOT / "public_results" / "SHA256SUMS.txt").write_text("".join(
-        f"{entry['sha256']}  {entry['relative_path'][15:]}\n" for entry in legacy), encoding="utf-8", newline="\n")
     print(json.dumps({"public_files": len(entries), "history_commits": len(revisions),
                      "history_blobs": len(checked), "literal_token_candidates": 0,
                      "restricted_csv_or_data_candidates": 0,

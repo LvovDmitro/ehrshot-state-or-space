@@ -1,3 +1,0 @@
-task,n_examples,n_patients,n_positive,event_rate,warning
-guo_icu,1154,1154,45,0.0389948006932409,none
-guo_readmission,1190,1190,4,0.0033613445378151,too_few_positive_events_for_stable_comparison

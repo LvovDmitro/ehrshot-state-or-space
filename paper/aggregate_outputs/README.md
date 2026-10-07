@@ -1,22 +1,23 @@
-# Current camera-ready aggregate outputs
+# Aggregate Results
 
-These files contain only aggregate numerical evidence, not clinical records,
-subject/episode identifiers, diagnosis codes, timestamps, or individual risks.
+Numerical inputs for the paper's tables and figures. The `auprc` field denotes
+average precision (AP). Results contain no patient or episode identifiers.
 
-- `tae_submission_analysis.py` generates metric, calibration, weighting,
-  multiplicity, seed-overlap, and strictly pre-prediction repetition summaries.
-- `characterize_selected_episodes.py` generates discordant-selection profiles,
-  final ensemble set counts, and exact stress membership exchanges.
-- `matched_stability_and_shift_profiles.py` generates fixed-ensemble-size
-  overlap references and largest-5%-shift group profiles.
-- `audit_summary.json` records the full retained-package verification.
-- `current_contracts_verification.json` records validation by the hardened
-  current ensemble code without changing the fitted probabilities.
+| Analysis | Files |
+|---|---|
+| Ensemble performance and paired contrasts | `recomputed_ensemble_metrics.csv`, `multiplicity_sensitivity.csv` |
+| Calibration | `calibration_summary.csv`, `calibration_bins.csv` |
+| Protocol-dependent preferences | `evaluation_conclusion_matrix.csv` |
+| Selected-set overlap and retraining stability | `ensemble_top10_cross_representation.csv`, `matched_size_stability.csv`, `seed_top10_*.csv` |
+| Discordant episode profiles | `discordant_top_decile_characterization.csv` |
+| Strict pre-prediction repetition | `copy_forward_strict_pre_prediction_*.csv` |
+| Membership exchanges and largest shifts | `full_repetition_top_decile_churn.csv`, `stress_shift_tail_characterization.csv` |
 
-See ../PAPER_OUTPUT_MAP.md for the final table/figure mapping. Candidate age is
-time since first mention, not diagnosis span. The largest-shift groups are
-pipeline-specific, post-hoc, and conditional on stress eligibility.
+Selection uses `ceil(0.10 * N)` with deterministic tie-breaking. Candidate age
+is time since its first recorded mention. Largest-shift profiles use the top
+5% of absolute probability changes within the strict stress cohort. The
+fixed-size retraining references use one- and two-seed ensembles.
 
-Offline public checks and plots use `python paper/reproduce_public.py` from the
-repository root. Regenerating row-level summaries or bootstrap intervals
-requires the authorized retained private inputs.
+Run `python paper/reproduce_public.py` from the repository root to regenerate
+the tables and figures. Recomputing patient-level statistics requires the
+authorized inputs described in [the experiment guide](../../docs/EXPERIMENTS.md).

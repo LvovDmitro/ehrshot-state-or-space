@@ -910,9 +910,12 @@ def plot_copy_forward(probability: pd.DataFrame, top10: pd.DataFrame, output_dir
 
 
 def plot_calibration(calibration_bins_frame: pd.DataFrame, output_dir: Path) -> None:
-    labels = {"raw_4096": "Raw", "condition_era_90_backfill_4096": "Persistence-aware"}
-    colors = {"raw_4096": "#333333", "condition_era_90_backfill_4096": "#2f6f9f"}
-    fig, axes = plt.subplots(1, 2, figsize=(8.8, 3.8), constrained_layout=True)
+    labels = {"raw_4096": "Raw", "condition_era_90_backfill_4096": "Era+backfill"}
+    colors = {"raw_4096": "#D55E00", "condition_era_90_backfill_4096": "#0072B2"}
+    plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 12,
+                         "axes.labelsize": 12, "xtick.labelsize": 10,
+                         "ytick.labelsize": 10})
+    fig, axes = plt.subplots(1, 2, figsize=(9.5, 4.2), constrained_layout=True)
     for axis, task in zip(axes, TASK_LABELS):
         task_frame = calibration_bins_frame[calibration_bins_frame["task"] == task]
         maximum = 0.0
@@ -931,13 +934,13 @@ def plot_calibration(calibration_bins_frame: pd.DataFrame, output_dir: Path) -> 
         axis.plot([0, limit], [0, limit], linestyle="--", color="#888888", linewidth=1)
         axis.set_xlim(0, limit)
         axis.set_ylim(0, limit)
-        axis.set_title(TASK_LABELS[task], fontsize=11)
+        axis.set_title(TASK_LABELS[task], fontsize=14)
         axis.set_xlabel("Mean predicted risk")
         axis.set_ylabel("Observed event rate")
         axis.grid(alpha=0.2)
-        axis.tick_params(labelsize=8)
-    axes[0].legend(frameon=False, fontsize=8)
-    fig.suptitle("Held-out calibration by equal-frequency risk decile", fontsize=12)
+        axis.tick_params(labelsize=10)
+    axes[0].legend(frameon=False, fontsize=11)
+    fig.suptitle("Calibration by equal-frequency risk decile", fontsize=14)
     for suffix in ["png", "pdf"]:
         fig.savefig(output_dir / f"figure_calibration_curves.{suffix}", dpi=300, bbox_inches="tight")
     plt.close(fig)
