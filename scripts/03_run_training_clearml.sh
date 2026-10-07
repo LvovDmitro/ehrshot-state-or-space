@@ -10,7 +10,18 @@ cd "$PROJECT_ROOT"
 : "${GPU_QUEUE:?Set GPU_QUEUE}"
 : "${RUN_CONFIG:?Set RUN_CONFIG}"
 
-RUN_TAG="${RUN_TAG:-$(basename "$RUN_CONFIG" .json)}"
+case "$(basename "$RUN_CONFIG")" in
+  state_or_space_core_4096_runs.json) DEFAULT_RUN_TAG=core_4096_wide ;;
+  state_or_space_context_16384_runs.json) DEFAULT_RUN_TAG=context_16384_wide ;;
+  state_or_space_icu_gap_extra_runs.json) DEFAULT_RUN_TAG=icu_gap_extra_30_180_wide ;;
+  state_or_space_additional_seeds_45_46_runs.json) DEFAULT_RUN_TAG=additional_seeds_45_46_all_wide ;;
+  *) DEFAULT_RUN_TAG="$(basename "$RUN_CONFIG" .json)" ;;
+esac
+RUN_TAG="${RUN_TAG:-$DEFAULT_RUN_TAG}"
+case "$RUN_TAG" in
+  core_4096|context_16384|icu_gap_extra_30_180|additional_seeds_45_46_all)
+    RUN_TAG="${RUN_TAG}_wide" ;;
+esac
 
 OUTPUT_DIR="${OUTPUT_DIR:-ehrshot_state_or_space_final_sequence_results/$RUN_TAG}"
 

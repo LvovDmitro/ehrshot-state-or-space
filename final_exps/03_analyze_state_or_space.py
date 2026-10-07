@@ -39,8 +39,8 @@ from common_ehrshot_eval import binary_ranking_metrics, topk_metrics
 
 
 S3_BASE = (
-    "s3://api.blackhole2.ai.innopolis.university:443/"
-    "pershin-medailab/pershin-medailab/EHR_Risk_Profiling/EHRSHOT"
+    "s3://storage.invalid/"
+    "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT"
 )
 
 PREDICTIVE_METRICS = [
@@ -53,6 +53,7 @@ PREDICTIVE_METRICS = [
 
 LOWER_IS_BETTER_METRICS = {"brier", "logloss"}
 DIRECTION_TOL = 1e-12
+REQUIRED_SEEDS = (42, 43, 44, 45, 46)
 
 HISTORY_METRICS = [
     "earliest_retained_days_before_prediction",
@@ -164,7 +165,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clearml-queue", default="cpu")
     parser.add_argument(
         "--clearml-project",
-        default="pershin-medailab/EHR_Risk_Profiling/EHRSHOT",
+        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -172,7 +173,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--clearml-output-uri",
-        default="s3://api.blackhole2.ai.innopolis.university:443/pershin-medailab",
+        default="s3://storage.invalid/anonymous-project",
     )
     return parser.parse_args()
 
@@ -461,6 +462,7 @@ def merge_prediction_runs(
         if actual != expected_seeds:
             raise ValueError(f"{task}/{version}: expected seeds {expected_seeds}, got {actual}")
 
+    validate_wide_predictions(combined, config)
     args.predictions.parent.mkdir(parents=True, exist_ok=True)
     combined.to_csv(args.predictions, index=False)
     manifest_rows.append(
@@ -524,12 +526,25 @@ def validate_wide_predictions(
     if "numeric_on" not in pred.columns:
         pred["numeric_on"] = True
 
+    identity_columns = [
+        "task", "representation", "compression_version", "model", "model_family",
+        "seed", "row_id", "subject_id", "prediction_time", "y_true", "max_len",
+    ]
+    if pred[identity_columns].isna().any().any():
+        raise ValueError("Held-out prediction identities contain missing values")
     for col in ["seed", "row_id", "subject_id", "y_true", "max_len"]:
-        pred[col] = pred[col].astype(int)
+        values = pd.to_numeric(pred[col], errors="raise")
+        if not np.isfinite(values).all() or not values.eq(values.round()).all():
+            raise ValueError(f"{col} must contain finite integers")
+        pred[col] = values.astype(int)
+    if not pred["y_true"].isin([0, 1]).all():
+        raise ValueError("Held-out labels must be binary")
     pred["numeric_on"] = pred["numeric_on"].astype(bool)
     pred["logit"] = pred["logit"].astype(float)
     pred["risk_raw"] = pred["risk_raw"].astype(float)
     pred["risk_calibrated"] = pred["risk_calibrated"].astype(float)
+    if not np.isfinite(pred[["logit", "risk_raw", "risk_calibrated"]]).all().all():
+        raise ValueError("Prediction scores must be finite")
     pred["prediction_time"] = pd.to_datetime(pred["prediction_time"], errors="raise")
 
     raw_expected = sigmoid_np(pred["logit"].to_numpy())
@@ -541,11 +556,13 @@ def validate_wide_predictions(
         if not pred[risk_col].between(0.0, 1.0).all():
             raise ValueError(f"{risk_col} contains values outside [0, 1]")
 
-    key = ["task", "compression_version", "model", "seed", "row_id", "subject_id"]
+    key = ["task", "compression_version", "seed", "row_id"]
     if pred.duplicated(key).any():
         raise ValueError("Duplicate held-out rows in wide predictions")
 
     expected_seeds = sorted(int(x) for x in config["seeds"])
+    if expected_seeds != list(REQUIRED_SEEDS):
+        raise ValueError(f"Final analysis requires exactly seeds {list(REQUIRED_SEEDS)}")
     actual_seeds = sorted(pred["seed"].unique().tolist())
     if actual_seeds != expected_seeds:
         raise ValueError(f"Expected seeds {expected_seeds}, got {actual_seeds}")
@@ -556,15 +573,33 @@ def validate_wide_predictions(
         .drop_duplicates()
         .itertuples(index=False, name=None)
     )
-    missing_pairs = required_pairs - actual_pairs
-    if missing_pairs:
-        raise ValueError(f"Predictions miss task/version pairs: {sorted(missing_pairs)}")
+    if not required_pairs or actual_pairs != required_pairs:
+        raise ValueError("Predictions do not match the required task/version matrix")
 
+    task_cohorts: dict[str, pd.DataFrame] = {}
+    cohort_columns = ["row_id", "subject_id", "prediction_time", "y_true"]
+    metadata_columns = [
+        "model", "model_family", "representation", "max_len", "era_gap", "numeric_on",
+    ]
     for task, version in sorted(required_pairs):
         part = pred[(pred["task"] == task) & (pred["compression_version"] == version)]
-        counts = part.groupby("seed")["row_id"].nunique()
-        if sorted(counts.index.tolist()) != expected_seeds or counts.nunique() != 1:
-            raise ValueError(f"Unequal seed coverage for {task}/{version}: {counts.to_dict()}")
+        if sorted(part["seed"].unique().tolist()) != expected_seeds:
+            raise ValueError(f"Incomplete seed coverage for {task}/{version}")
+        if len(part[metadata_columns].drop_duplicates()) != 1:
+            raise ValueError(f"Inconsistent run metadata for {task}/{version}")
+        reference = None
+        for seed in expected_seeds:
+            cohort = (
+                part.loc[part["seed"] == seed, cohort_columns]
+                .sort_values("row_id").reset_index(drop=True)
+            )
+            if reference is None:
+                reference = cohort
+            elif not cohort.equals(reference):
+                raise ValueError(f"Seed cohort identity mismatch for {task}/{version}")
+        if task in task_cohorts and not reference.equals(task_cohorts[task]):
+            raise ValueError(f"Representation cohort identity mismatch for task={task}")
+        task_cohorts[task] = reference
 
     # Compatibility aliases used only inside the analysis code and old-style outputs.
     pred["model_name"] = pred["model"]
@@ -866,6 +901,11 @@ def summarize_seed_metrics(by_seed: pd.DataFrame) -> pd.DataFrame:
 
 
 def make_ensemble(pred: pd.DataFrame) -> pd.DataFrame:
+    if sorted(pred["seed"].unique().tolist()) != list(REQUIRED_SEEDS):
+        raise ValueError("Ensemble requires exactly the five final seeds")
+    key = ["task", "compression_version", "model", "seed", "row_id"]
+    if pred.duplicated(key).any():
+        raise ValueError("Duplicate prediction entries cannot be ensembled")
     group_cols = [
         "task", "model", "model_family", "representation", "compression_version",
         "max_len", "era_gap", "numeric_on", "split", "row_id", "subject_id",
@@ -883,8 +923,8 @@ def make_ensemble(pred: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
     ens["risk_calibrated_std"] = ens["risk_calibrated_std"].fillna(0.0)
-    if ens["n_seeds"].nunique() != 1:
-        raise ValueError("Ensemble rows have inconsistent seed counts")
+    if ens.empty or not ens["n_seeds"].eq(len(REQUIRED_SEEDS)).all():
+        raise ValueError("Every ensemble entry must contain all five final seeds")
     ens["model_name"] = ens["model"]
     ens["example_id"] = ens["row_id"]
     ens["pred_proba"] = ens["risk_calibrated"]

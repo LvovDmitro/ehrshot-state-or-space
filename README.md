@@ -1,392 +1,113 @@
-# State or Space? Persistence-aware compression for EHR risk prediction
+# Similar Scores, Different High-Risk Episodes
 
-Репозиторий содержит финальный воспроизводимый эксперимент по persistence-aware представлению продольной электронной медицинской карты в EHRSHOT.
+**Auditing Model Selection in Longitudinal EHRs**
 
-Главный исследовательский вопрос:
+Polina Korobeinikova, Dmitry Lvov, Ilya Pershin.
+Accepted for an in-person poster at TAE (Trust-AI-Eval), NeurIPS 2026.
+[Paper and decision](https://openreview.net/forum?id=RffArnWpec).
 
-> Модель получает пользу от явного представления продолжающегося клинического состояния или главным эффектом compression является освобождение ограниченного контекста?
+This maintained fork preserves Polina's original implementation and commit
+history. Dmitry Lvov maintains the paper-facing analyses and documentation.
+[Original repository](https://github.com/poinka/ehrshot-state-or-space).
 
-Дополнительно проводится frozen-model stress test с искусственным copy-forward: уже известный устойчивый диагноз повторно добавляется в последующие визиты, после чего сравнивается устойчивость raw и `condition_era_90`.
+## What the study establishes
 
-## Зафиксированный протокол
+The study compares raw and persistence-aware EHR sequences for 30-day
+readmission and ICU transfer on EHRSHOT. Fourteen task-representation pairs
+use five seeds each. Similar aggregate performance coexists with different
+top-decile episode sets: 34 of 219 readmission selections and 51 of 204 ICU
+selections differ between the primary five-seed ensembles. This is a
+fixed-capacity episode comparison, not evidence of clinical benefit or harm.
 
-- задачи:
-  - `guo_readmission` — 30-дневная повторная госпитализация;
-  - `guo_icu` — перевод в ICU;
-- граница истории: **`event_time <= prediction_time`**;
-- patient-level splits из официального EHRSHOT `subject_splits.parquet`;
-- whitelist устойчивых диагнозов строится только по train split;
-- модели:
-  - `RETAIN_lite_numeric` для readmission;
-  - `GRU_2L_numeric` для ICU;
-- seeds: `42, 43, 44, 45, 46`;
-- Platt calibration обучается только на tuning split;
-- основной анализ выполняется только на held-out split;
-- patient-cluster bootstrap: 10 000 повторений.
+All ten primary paired intervals include zero. State encoding, retained
+history, calibration, weighting, initialization, and controlled repetition are
+audited separately. The cohort was reused during development; the findings
+are retrospective and do not establish universal compression superiority.
+The legacy CSV field `auprc` denotes **average precision (AP)**.
 
-## Представления
+## Offline public reproduction
 
-Основной эксперимент включает 14 комбинаций task × representation:
-
-- `raw_4096`;
-- `condition_era_90_backfill_4096`;
-- `condition_era_90_no_backfill_4096`;
-- `condition_era_90_structure_null_4096`;
-- `raw_16384`;
-- `condition_era_90_backfill_16384`;
-- для ICU дополнительно `condition_era_30_backfill_4096` и `condition_era_180_backfill_4096`.
-
-Итого выполняется 70 обучений: 14 вариантов × 5 seed.
-
-## Структура репозитория
-
-```text
-final_exps/
-├── 00_build_train_only_persistent_whitelist.py
-├── 01_build_sequence_datasets.py
-├── 02_train_sequence_multiseed.py
-├── 03_analyze_state_or_space.py
-├── 04_artificial_copy_forward_inference.py
-├── 05_analyze_copy_forward_robustness.py
-├── 06_prepare_final_reproducibility_package.py
-├── 07_prepare_public_results.py
-└── common_ehrshot_eval.py
-
-configs/
-├── state_or_space_sequence_datasets.json
-├── state_or_space_core_4096_runs.json
-├── state_or_space_context_16384_runs.json
-├── state_or_space_icu_gap_extra_runs.json
-├── state_or_space_additional_seeds_45_46_runs.json
-└── state_or_space_analysis_5seeds.json
-
-scripts/
-├── 00_check_environment.sh
-├── 01_run_whitelist_clearml.sh
-├── 02_run_dataset_builder_clearml.sh
-├── 03_run_training_clearml.sh
-├── 04_run_analysis_clearml.sh
-├── 05_run_copy_forward_inference_mps.sh
-├── 06_run_copy_forward_analysis.sh
-├── 07_prepare_reproducibility_package.sh
-├── 08_record_provenance.sh
-└── 09_prepare_public_results.sh
-```
-
-Устаревший общий pipeline намеренно отсутствует: этапы запускаются отдельно, а завершение каждого тяжёлого этапа проверяется по ClearML и MinIO.
-
-## Установка
+No EHR records, GPU, MinIO, ClearML, or credentials are needed to verify the
+published aggregate arithmetic and regenerate the three bitmap figures.
+Tested with Python 3.13; the original training target is Python 3.12.
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-source .env
+# Linux/macOS: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements-public.txt
+python paper/reproduce_public.py
+python -m pytest -q
 ```
 
-ClearML должен быть настроен на приватный сервер проекта. Секретные ключи не хранятся в репозитории.
+Outputs go to `paper/reproduced/`. The command verifies release checksums,
+primary comparison intervals, selected-set arithmetic, exact strict stress
+cohorts, and matched-size stability summaries before plotting.
 
-## Проверка окружения
+This is **aggregate verification**, not retraining or a new patient bootstrap.
+Those require the authorized restricted inputs described below. The paper's
+representation diagram is in LaTeX, not a model output plot.
+
+## Paper materials
+
+- `paper/source/`: final LaTeX, figures, bibliography, official unmodified style.
+- `paper/TAE_2026_camera_ready.pdf`: prepared revision; upload status is not implied.
+- `paper/aggregate_outputs/`: current camera-ready numerical inputs.
+- `paper/analysis/`: audit, calibration, set-stability, stress, and plotting code.
+- `paper/PAPER_OUTPUT_MAP.md`: paper-to-file mapping and exact analysis settings.
+- `paper/BUILD.md`: PDF build instructions and verified checksum.
+- `tests/`: synthetic validation; no clinical records.
+- `RELEASE_MANIFEST.csv`: checksums of release files, not historical experiment identity.
+- `LICENSING.md`: explicit rights status; no retroactive blanket license.
+- `public_results/`: historical July exports, **not** current paper stress results.
+
+The strictly pre-prediction stress cohort has 1,286 readmission and 1,028 ICU
+episodes; historical July tables used 1,455 and 1,265. Current analyses never
+mix these denominators.
+
+## Authorized row-level reproduction
+
+Obtain EHRSHOT access from its data owner and comply with its Credentialed
+Health Data License. Do not upload source records, predictions, identifiers,
+checkpoints, or service credentials to this repository.
+
+With the retained private reproducibility package available locally:
 
 ```bash
-bash scripts/00_check_environment.sh
+python paper/analysis/tae_submission_analysis.py \
+  --package-root /authorized/local/package --output-dir /local/audit \
+  --calibration-bootstrap 2000 --bootstrap-seed 20260820
+python paper/analysis/characterize_selected_episodes.py \
+  --package-root /authorized/local/package --output-dir /local/camera-ready
+python paper/analysis/matched_stability_and_shift_profiles.py \
+  --package-root /authorized/local/package --output-dir /local/camera-ready
 ```
 
-Для проверки локального EHRSHOT MEDS:
-
-```bash
-REQUIRE_LOCAL_DATA=1 bash scripts/00_check_environment.sh
-```
-
-Для проверки доступа к MinIO:
-
-```bash
-CHECK_STORAGE=1 bash scripts/00_check_environment.sh
-```
-
-Скрипт также проверяет:
-
-- финальное правило `event_time <= prediction_time`;
-- наличие шести финальных конфигов;
-- отсутствие дублей в матрице из 70 запусков;
-- seeds 42–46;
-- импорт зависимостей и доступность CUDA/MPS;
-- синтаксис всех финальных Python-скриптов.
-
-## 1. Построение train-only whitelist
-
-Локально с ClearML-логированием:
-
-```bash
-REMOTE_CPU=0 bash scripts/01_run_whitelist_clearml.sh
-```
-
-На CPU worker:
-
-```bash
-REMOTE_CPU=1 CPU_QUEUE=cpu bash scripts/01_run_whitelist_clearml.sh
-```
-
-Локальная папка сохраняется под именем `ehrshot_train_only_chronic_whitelist_50`, потому что этот путь зафиксирован в dataset config. В MinIO результат загружается в стабильный prefix:
-
-```text
-state_or_space_whitelist/
-```
-
-## 2. Построение sequence datasets
-
-```bash
-REMOTE_CPU=0 bash scripts/02_run_dataset_builder_clearml.sh
-```
-
-Полная пересборка cache:
-
-```bash
-REBUILD_CACHE=1 REMOTE_CPU=0 bash scripts/02_run_dataset_builder_clearml.sh
-```
-
-## 3. Обучение
-
-`03_run_training_clearml.sh` отправляет один явно выбранный run config. Примеры:
-
-```bash
-RUN_CONFIG=configs/state_or_space_core_4096_runs.json \
-RUN_TAG=core_4096 \
-GPU_QUEUE=gpu \
-bash scripts/03_run_training_clearml.sh
-```
-
-```bash
-RUN_CONFIG=configs/state_or_space_context_16384_runs.json \
-RUN_TAG=context_16384 \
-GPU_QUEUE=gpu \
-bash scripts/03_run_training_clearml.sh
-```
-
-```bash
-RUN_CONFIG=configs/state_or_space_icu_gap_extra_runs.json \
-RUN_TAG=icu_gap_extra_30_180 \
-GPU_QUEUE=gpu \
-bash scripts/03_run_training_clearml.sh
-```
-
-```bash
-RUN_CONFIG=configs/state_or_space_additional_seeds_45_46_runs.json \
-RUN_TAG=additional_seeds_45_46_all \
-GPU_QUEUE=gpu \
-bash scripts/03_run_training_clearml.sh
-```
-
-Каждая команда создаёт отдельную ClearML task. Это сделано намеренно: перезапуск одной группы не затрагивает остальные результаты.
-
-## 4. Финальный 5-seed анализ в ClearML
-
-```bash
-REMOTE_ANALYSIS=1 \
-CPU_QUEUE=cpu \
-bash scripts/04_run_analysis_clearml.sh
-```
-
-Анализатор объединяет четыре wide run-группы:
-
-```text
-core_4096_wide
-context_16384_wide
-icu_gap_extra_30_180_wide
-additional_seeds_45_46_all_wide
-```
-
-Перед расчётом он проверяет наличие всех 14 task/version пар и всех пяти seed. Канонический prediction-файл сохраняется в:
-
-```text
-ehrshot_state_or_space_final_sequence_results/combined_5seeds_wide/
-sequence_multiseed_heldout_predictions_wide.csv
-```
-
-Основной результат анализа:
-
-```text
-ehrshot_state_or_space_final_analysis_5seeds_wide/
-```
-
-## 5. Artificial copy-forward inference на MPS
-
-```bash
-bash scripts/05_run_copy_forward_inference_mps.sh
-```
-
-Эксперимент не обучает модели. Он использует frozen checkpoints и добавляет один уже существующий устойчивый диагноз в 0%, 25%, 50% и 100% последующих подходящих визитов.
-
-`zero_percent_baseline_agreement.csv` сохраняется как диагностическая проверка. Copy-forward deltas рассчитываются относительно 0% варианта, полученного в том же MPS-запуске.
-
-После успешного запуска файлы дополнительно загружаются в стабильную структуру:
-
-```text
-state_or_space_copy_forward/inference/<artifact_name>/<filename>
-```
-
-## 6. Анализ copy-forward robustness
-
-Сначала укажите ID успешной inference task:
-
-```bash
-export COPY_FORWARD_SOURCE_TASK_ID="<clearml-task-id>"
-bash scripts/06_run_copy_forward_analysis.sh
-```
-
-Анализ сравнивает raw и `condition_era_90` по:
-
-- изменению индивидуальных вероятностей;
-- AUPRC, LogLoss и Brier;
-- top-10% precision;
-- retention, Jaccard и churn состава top-10%;
-- patient-level bootstrap.
-
-Стабильные артефакты сохраняются в:
-
-```text
-state_or_space_copy_forward/analysis/<artifact_name>/<filename>
-```
-
-## 7. Отслеживаемость и provenance
-
-После завершения задач заполните task IDs в окружении и выполните:
-
-```bash
-bash scripts/08_record_provenance.sh
-```
-
-Будут созданы:
-
-```text
-reproducibility/git_state.txt
-reproducibility/environment_snapshot.txt
-reproducibility/clearml_tasks.csv
-```
-
-Task ID передаются через переменные из `.env.example`, а не зашиваются в Python-код.
-
-## 8. Финальная таблица, два рисунка и reproducibility package
-
-```bash
-bash scripts/07_prepare_reproducibility_package.sh
-```
-
-Скрипт читает frozen artifacts из MinIO, выполняет финальные integrity checks и создаёт:
-
-```text
-state_or_space_reproducibility_package/
-├── artifacts/
-├── repository_snapshot/
-├── tables/
-│   ├── final_ensemble_results.csv
-│   ├── final_primary_comparisons.csv
-│   └── final_copy_forward_results.csv
-├── figures/
-│   ├── figure_1_primary_comparisons_forest.png
-│   ├── figure_1_primary_comparisons_forest.pdf
-│   ├── figure_2_copy_forward_probability_stability.png
-│   └── figure_2_copy_forward_probability_stability.pdf
-├── checks/
-│   ├── final_integrity_summary.csv
-│   ├── split_audit_status.csv
-│   ├── representation_invariants.csv
-│   └── zero_percent_baseline_agreement.csv
-├── provenance/
-├── storage_manifest.csv
-├── package_manifest.json
-└── SHA256SUMS.txt
-```
-
-Также создаётся ZIP и загружается в:
-
-```text
-state_or_space_reproducibility_package/
-```
-
-Для локальной проверки на ранее скачанном artifact root:
-
-```bash
-REPRO_SOURCE_ROOT=/path/to/EHRSHOT \
-SKIP_REPRO_UPLOAD=1 \
-bash scripts/07_prepare_reproducibility_package.sh
-```
-
-## 9. Публичные таблицы и рисунки
-
-Полный reproducibility package содержит приватные row-level артефакты и остаётся только в закрытом MinIO/ClearML. Для GitHub используется отдельный publication-safe экспорт:
-
-```bash
-bash scripts/09_prepare_public_results.sh
-```
-
-Скрипт `final_exps/07_prepare_public_results.py` читает только агрегированные результаты из приватного MinIO и создаёт папку:
-
-```text
-public_results/
-├── README.md
-├── RESULTS_SUMMARY.md
-├── RESULTS_SUMMARY_RU.md
-├── experiment_settings.json
-├── PUBLICATION_SAFETY_MANIFEST.csv
-├── SHA256SUMS.txt
-├── tables/
-│   ├── table_1_final_ensemble_results.csv
-│   ├── table_2_primary_comparisons.csv
-│   ├── table_3_copy_forward_robustness.csv
-│   └── table_4_history_coverage.csv
-├── figures/
-│   ├── figure_1_primary_comparisons_forest.png
-│   ├── figure_1_primary_comparisons_forest.pdf
-│   ├── figure_2_copy_forward_probability_stability.png
-│   └── figure_2_copy_forward_probability_stability.pdf
-└── checks/
-    └── publication_safety_and_integrity.csv
-```
-
-В public export не включаются patient-level или episode-level predictions, идентификаторы, diagnosis codes, checkpoints, EHR rows, copy-forward episode plans, ClearML task IDs и внутренние storage manifests. Перед завершением скрипт автоматически проверяет имена файлов и столбцы публичных CSV.
-
-Для локальной пересборки из уже скачанного приватного пакета без ClearML:
-
-```bash
-PUBLIC_RESULTS_SOURCE_ROOT=/path/to/state_or_space_reproducibility_package \
-PUBLIC_RESULTS_ENABLE_CLEARML=0 \
-bash scripts/09_prepare_public_results.sh
-```
-
-Опциональная загрузка безопасных результатов в отдельный MinIO prefix:
-
-```bash
-PUBLIC_RESULTS_S3_PREFIX="$EHRSHOT_S3_BASE/state_or_space_public_results" \
-bash scripts/09_prepare_public_results.sh
-```
-
-Папка [`public_results/`](public_results/) предназначена для публикации в GitHub. Приватные `state_or_space_reproducibility_package/` и `state_or_space_reproducibility_package.zip`, а также необязательный `public_results.zip` должны оставаться в `.gitignore`.
-
-## Основные результаты
-
-Полный persistence-aware вариант не показал статистически устойчивого общего превосходства над raw ни для readmission, ни для ICU.
-
-Для ICU декомпозиция выявила два воспроизводимых механизма:
-
-- state features улучшают AUROC, AUPRC, Brier и LogLoss относительно structure-null;
-- backfill улучшает AUROC и LogLoss относительно no-backfill.
-
-Copy-forward stress test оказался task-dependent:
-
-- для readmission `condition_era_90` существенно устойчивее raw;
-- для ICU в пятиseedовом ensemble raw устойчивее по изменению вероятностей и составу top-10%, хотя `condition_era_90` сохраняет более высокое абсолютное качество.
-
-## Приватные данные
-
-В публичный GitHub нельзя добавлять:
-
-- `EHRSHOT_MEDS/`;
-- sequence datasets и checkpoints;
-- per-seed, wide и ensemble predictions;
-- файлы с `subject_id` и `row_id`;
-- `EHRSHOT.zip` и reproducibility package;
-- ClearML/MinIO credentials.
-
-Подробная карта приватных артефактов приведена в [`ARTIFACTS.md`](ARTIFACTS.md). Публикуемые агрегированные результаты находятся в [`public_results/`](public_results/), а краткие выводы — в [`public_results/RESULTS_SUMMARY_RU.md`](public_results/RESULTS_SUMMARY_RU.md).
+These programs emit aggregate outputs. Full training remains in `final_exps/`
+with frozen `configs/` and stage wrappers in `scripts/`. Use Python 3.12 and
+`requirements.txt` for that historical dependency target; specify local data,
+fresh cache/output directories, and your own infrastructure settings. Copy
+`env.example` to `.env` only if the optional storage/tracking pipeline is used.
+`storage.invalid` is an intentional non-routable placeholder, not a server.
+
+The trained input boundary was `event_time <= prediction_time`; the separate
+repetition audit excludes episodes with eligible visits at or after prediction.
+Do not silently change the trained boundary and report the old results.
+
+Important limits: the exact upstream MEDS archive revision/checksum and training
+hardware were not retained; source records cannot be redistributed. Historical
+cache/resume checks are not content-addressed. Start with fresh caches/runs when
+changing data, whitelist, vocabulary, or configuration. The historical command
+reference is `docs/TRAINING_PIPELINE_HISTORY.md`; current scripts supersede it.
+
+## Attribution and support
+
+Innopolis University is the first affiliation for all authors. Dmitry Lvov is
+also affiliated with ITMO University; Ilya Pershin with Kazan Federal University.
+
+The study was supported by the Ministry of Economic Development of the Russian
+Federation (agreement No. 139-10-2025-034 dd. 19.06.2025,
+IGK 000000C313925P4D0002).
+
+Use `CITATION.cff` for attribution. See `LICENSING.md` before reusing code;
+public availability does not grant unrestricted reuse rights.

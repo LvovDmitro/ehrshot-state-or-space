@@ -34,8 +34,8 @@ import pandas as pd
 
 
 S3_BASE = (
-    "s3://api.blackhole2.ai.innopolis.university:443/"
-    "pershin-medailab/pershin-medailab/EHR_Risk_Profiling/EHRSHOT"
+    "s3://storage.invalid/"
+    "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT"
 )
 SCRIPT_VERSION = "state-or-space-public-results-v1-20260724"
 
@@ -67,7 +67,7 @@ COMPARISON_LABELS = {
 
 METRIC_LABELS = {
     "auroc": "AUROC",
-    "auprc": "AUPRC",
+    "auprc": "AP",
     "brier": "Brier score",
     "logloss": "LogLoss",
     "top_10pct_precision": "Top-10% precision",
@@ -171,7 +171,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--enable-clearml", action="store_true")
     parser.add_argument(
         "--clearml-project",
-        default="pershin-medailab/EHR_Risk_Profiling/EHRSHOT",
+        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -179,7 +179,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--clearml-output-uri",
-        default="s3://api.blackhole2.ai.innopolis.university:443/pershin-medailab",
+        default="s3://storage.invalid/anonymous-project",
     )
     return parser.parse_args()
 
@@ -417,9 +417,12 @@ def create_tables(paths: dict[str, Path], output_dir: Path) -> dict[str, tuple[P
     copy_table = copy_robustness[[column for column in copy_columns if column in copy_robustness.columns]]
 
     history = pd.read_csv(paths["history_coverage"]).copy()
+    expected_history = {"earliest_retained_days_before_prediction", "final_seq_len", "n_backfill_events_added"}
+    if not expected_history.issubset(set(history["history_metric"])):
+        raise ValueError("History coverage export is missing expected metrics")
     history = history[
         history["history_metric"].isin(
-            ["earliest_retained_days_before_prediction", "final_seq_len", "n_backfilled_events"]
+            ["earliest_retained_days_before_prediction", "final_seq_len", "n_backfill_events_added"]
         )
     ].copy()
     history.insert(0, "task_label", history["task"].map(TASK_LABELS).fillna(history["task"]))
@@ -657,17 +660,18 @@ def create_public_checks(paths: dict[str, Path], output_dir: Path) -> tuple[Path
     zero = pd.read_csv(paths["zero_agreement"])
     ensemble = pd.read_csv(paths["ensemble_metrics"])
     copy_probability = pd.read_csv(paths["copy_probability"])
+    passed = invariants["passed"].astype("string").str.strip().str.lower().isin(["true", "1"])
 
     rows = [
         {
             "check": "split_audit",
-            "status": "PASS" if split_status["status"].eq("OK").all() else "FAIL",
+            "status": "PASS" if not split_status.empty and split_status["status"].eq("OK").all() else "FAIL",
             "details": f"{int(split_status['status'].eq('OK').sum())}/{len(split_status)} checks OK",
         },
         {
             "check": "representation_invariants",
-            "status": "PASS" if invariants["passed"].astype(bool).all() else "FAIL",
-            "details": f"{int(invariants['passed'].astype(bool).sum())}/{len(invariants)} checks passed",
+            "status": "PASS" if not invariants.empty and passed.all() else "FAIL",
+            "details": f"{int(passed.sum())}/{len(invariants)} checks passed",
         },
         {
             "check": "final_ensemble_matrix",
@@ -703,8 +707,8 @@ def create_public_checks(paths: dict[str, Path], output_dir: Path) -> tuple[Path
         },
         {
             "check": "prediction_time_protocol",
-            "status": "PASS",
-            "details": "event_time <= prediction_time",
+            "status": "DECLARED",
+            "details": "Declared event_time <= prediction_time; aggregate export does not re-audit source events",
         },
         {
             "check": "public_output_contains_no_row_level_sources",
@@ -716,6 +720,63 @@ def create_public_checks(paths: dict[str, Path], output_dir: Path) -> tuple[Path
     checks_dir = output_dir / "checks"
     checks_dir.mkdir(parents=True, exist_ok=True)
     return write_table(frame, checks_dir / "publication_safety_and_integrity")
+
+
+def assert_public_checks_pass(path: Path) -> None:
+    checks = pd.read_csv(path)
+    if checks.empty or not {"check", "status"}.issubset(checks.columns):
+        raise RuntimeError("Public integrity checks are missing or empty")
+    declared = checks["status"].eq("DECLARED")
+    if not checks.loc[declared, "check"].isin(["prediction_time_protocol"]).all():
+        raise RuntimeError("Unexpected declared check")
+    failed = checks.loc[~checks["status"].isin(["PASS", "DECLARED"]), "check"]
+    if not failed.empty:
+        raise RuntimeError("Public integrity checks failed: " + ", ".join(failed.astype(str)))
+
+
+def validate_output_directory(args: argparse.Namespace) -> Path:
+    requested = args.output_dir.expanduser().absolute()
+    if requested.is_symlink():
+        raise ValueError("Public output must not be a symlink")
+    output_dir = requested.resolve()
+    repo_root = Path(__file__).resolve().parents[1]
+    protected = [repo_root / name for name in (
+        ".git", "final_exps", "scripts", "configs", "tests", "paper", "reproducibility",
+    )]
+    if output_dir == output_dir.parent or output_dir == repo_root or output_dir in repo_root.parents:
+        raise ValueError("Public output must not replace a repository or filesystem root")
+    if any(output_dir == path or path in output_dir.parents for path in protected):
+        raise ValueError("Public output overlaps a protected repository directory")
+    if args.source_root is not None:
+        source = args.source_root.resolve()
+        if output_dir == source or output_dir in source.parents or source in output_dir.parents:
+            raise ValueError("Public output must not overlap the input source")
+    if output_dir.exists():
+        markers = [output_dir / "PUBLICATION_SAFETY_MANIFEST.csv", output_dir / "experiment_settings.json"]
+        if not output_dir.is_dir() or not all(path.is_file() for path in markers):
+            raise ValueError("Existing output is not a recognized public-results export")
+    return output_dir
+
+
+def publish_staged_outputs(staged_dir: Path, output_dir: Path) -> Path | None:
+    backup = None
+    if output_dir.is_symlink():
+        raise ValueError("Public output must not be a symlink")
+    if output_dir.exists():
+        markers = [output_dir / "PUBLICATION_SAFETY_MANIFEST.csv", output_dir / "experiment_settings.json"]
+        if not output_dir.is_dir() or not all(path.is_file() for path in markers):
+            raise ValueError("Existing output is not a recognized public-results export")
+        backup_root = Path(tempfile.mkdtemp(prefix=f".{output_dir.name}.previous-", dir=output_dir.parent))
+        backup = backup_root / output_dir.name
+        output_dir.rename(backup)
+    try:
+        staged_dir.rename(output_dir)
+    except BaseException:
+        if backup is not None and not output_dir.exists():
+            backup.rename(output_dir)
+            backup.parent.rmdir()
+        raise
+    return backup
 
 
 def scan_public_outputs(output_dir: Path) -> pd.DataFrame:
@@ -837,6 +898,7 @@ def init_clearml(args: argparse.Namespace):
 def upload_safe_outputs(args: argparse.Namespace, output_dir: Path) -> None:
     if not args.output_s3_prefix:
         return
+    assert_public_checks_pass(output_dir / "checks" / "publication_safety_and_integrity.csv")
     from clearml import StorageManager
 
     for path in sorted(output_dir.rglob("*")):
@@ -853,60 +915,57 @@ def upload_safe_outputs(args: argparse.Namespace, output_dir: Path) -> None:
 
 def main() -> None:
     args = parse_args()
-    task = init_clearml(args)
-    output_dir = args.output_dir.resolve()
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    with tempfile.TemporaryDirectory(prefix="state_or_space_public_inputs_") as temp:
-        paths = collect_inputs(args, Path(temp))
-        tables = create_tables(paths, output_dir)
-        figure_1 = create_figure_1(paths, output_dir / "figures")
-        figure_2 = create_figure_2(paths, output_dir / "figures")
-        summaries = create_results_summary(paths, output_dir)
-        checks = create_public_checks(paths, output_dir)
-
-    readme = write_readme(output_dir)
-    settings = write_settings(output_dir)
-
-    # First scan excludes its own manifest, then write the manifest and scan again.
-    safety = scan_public_outputs(output_dir)
-    unsafe = safety.loc[~safety["safe"]]
-    if not unsafe.empty:
-        raise RuntimeError(
-            "Publication safety scan failed:\n"
-            + unsafe[["file", "forbidden_name_pattern", "forbidden_columns"]].to_string(index=False)
-        )
-    safety_path = output_dir / "PUBLICATION_SAFETY_MANIFEST.csv"
-    safety.to_csv(safety_path, index=False)
-    sha_path = write_sha_manifest(output_dir)
-
+    output_dir = validate_output_directory(args)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
     zip_path: Path | None = None
     if args.make_zip:
-        zip_path = Path(
-            shutil.make_archive(
-                str(output_dir.parent / output_dir.name),
-                "zip",
-                root_dir=output_dir.parent,
-                base_dir=output_dir.name,
-            )
-        )
+        zip_path = output_dir.parent / f"{output_dir.name}.zip"
+        if zip_path.exists() or zip_path.is_symlink():
+            raise FileExistsError("Public ZIP already exists; choose a new output directory")
 
+    # Build and verify in a sibling directory; failed builds never erase prior results.
+    with tempfile.TemporaryDirectory(prefix=f".{output_dir.name}.staging-", dir=output_dir.parent) as staging:
+        staging_root = Path(staging)
+        staged_dir = staging_root / output_dir.name
+        staged_dir.mkdir()
+        with tempfile.TemporaryDirectory(prefix="state_or_space_public_inputs_") as temp:
+            paths = collect_inputs(args, Path(temp))
+            tables = create_tables(paths, staged_dir)
+            figure_1 = create_figure_1(paths, staged_dir / "figures")
+            figure_2 = create_figure_2(paths, staged_dir / "figures")
+            summaries = create_results_summary(paths, staged_dir)
+            checks = create_public_checks(paths, staged_dir)
+            assert_public_checks_pass(checks[0])
+
+        readme = write_readme(staged_dir)
+        settings = write_settings(staged_dir)
+        safety = scan_public_outputs(staged_dir)
+        unsafe = safety.loc[~safety["safe"]]
+        if safety.empty or not unsafe.empty:
+            raise RuntimeError("Publication safety scan failed")
+        safety_path = staged_dir / "PUBLICATION_SAFETY_MANIFEST.csv"
+        safety.to_csv(safety_path, index=False)
+        sha_path = write_sha_manifest(staged_dir)
+        safe_artifacts = [
+            *(path for pair in tables.values() for path in pair),
+            *figure_1, *figure_2, *summaries, *checks, readme, settings, safety_path, sha_path,
+        ]
+        safe_artifacts = [output_dir / path.relative_to(staged_dir) for path in safe_artifacts]
+        staged_zip = None
+        if zip_path is not None:
+            staged_zip = Path(shutil.make_archive(
+                str(staging_root / output_dir.name), "zip",
+                root_dir=staging_root, base_dir=output_dir.name,
+            ))
+        backup = publish_staged_outputs(staged_dir, output_dir)
+        if staged_zip is not None:
+            staged_zip.rename(zip_path)
+
+    assert_public_checks_pass(output_dir / "checks" / "publication_safety_and_integrity.csv")
+    task = init_clearml(args)
     upload_safe_outputs(args, output_dir)
 
     if task is not None:
-        safe_artifacts = [
-            *(path for pair in tables.values() for path in pair),
-            *figure_1,
-            *figure_2,
-            *summaries,
-            *checks,
-            readme,
-            settings,
-            safety_path,
-            sha_path,
-        ]
         for path in safe_artifacts:
             task.upload_artifact(
                 name=path.stem,
@@ -930,6 +989,8 @@ def main() -> None:
 
     print("\nPUBLIC RESULTS READY")
     print(f"Directory: {output_dir}")
+    if backup is not None:
+        print(f"Previous results retained: {backup}")
     if zip_path is not None:
         print(f"ZIP: {zip_path}")
     print(f"Files checked as publication-safe: {len(safety)}")

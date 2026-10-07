@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "Please cite the paper and acknowledge the original implementation by Polina Korobeinikova."
+type: software
+title: "Similar Scores, Different High-Risk Episodes: Auditing Model Selection in Longitudinal EHRs"
+authors:
+  - family-names: Korobeinikova
+    given-names: Polina
+    affiliation: Innopolis University
+  - family-names: Lvov
+    given-names: Dmitry
+    affiliation: Innopolis University; ITMO University
+  - family-names: Pershin
+    given-names: Ilya
+    affiliation: Innopolis University; Kazan Federal University
+repository-code: "https://github.com/LvovDmitro/ehrshot-state-or-space"
+url: "https://openreview.net/forum?id=RffArnWpec"
+version: "camera-ready-2026-10-07"
+date-released: "2026-10-07"

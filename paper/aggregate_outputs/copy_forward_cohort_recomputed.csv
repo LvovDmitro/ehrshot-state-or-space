@@ -1,0 +1,3 @@
+task,n_episodes,n_patients,n_positive,mean_existing_visits,mean_eligible_visits,median_eligible_visits,event_rate
+guo_icu,1265,687,45,13.38814229249012,53.39683794466403,24.0,0.03557312252964427
+guo_readmission,1455,777,167,13.368384879725086,52.03917525773196,22.0,0.11477663230240549

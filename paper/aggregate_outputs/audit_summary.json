@@ -1,0 +1,112 @@
+{
+  "package_hashes": {
+    "ok": 111
+  },
+  "prediction_audit": {
+    "wide_rows": 147150,
+    "ensemble_rows": 29430,
+    "duplicate_wide_keys": 0,
+    "identity_inconsistency_task_row": 0,
+    "wide_splits": [
+      "held_out"
+    ],
+    "wide_task_version_pairs": 14,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "seed_count_per_task_version": [
+      5
+    ],
+    "sigmoid_logit_max_abs_diff": 3.3306690738754696e-16,
+    "ensemble_merge_counts": {
+      "both": 29430,
+      "left_only": 0,
+      "right_only": 0
+    },
+    "ensemble_max_abs_diffs": {
+      "risk_calibrated": 1.1102230246251565e-16,
+      "risk_calibrated_std": 1.1102230246251565e-16,
+      "risk_raw": 1.1102230246251565e-16,
+      "logit_mean": 1.7763568394002505e-15
+    },
+    "metric_max_abs_diff": 8.881784197001252e-16
+  },
+  "copy_forward_audit": {
+    "per_seed_rows": 108800,
+    "ensemble_rows": 21760,
+    "ensemble_merge_counts": {
+      "both": 21760,
+      "left_only": 0,
+      "right_only": 0
+    },
+    "ensemble_risk_max_abs_diff": 1.1102230246251565e-16,
+    "ensemble_std_max_abs_diff": 1.5265566588595902e-16,
+    "copied_count_issues": 0,
+    "nonmonotonic_copy_count_groups": 0,
+    "eligible_rank_groups_with_issues": 0,
+    "eligible_visits_equal_prediction_time": 406,
+    "eligible_visits_after_prediction_time": 0,
+    "episodes_with_equal_time_eligible_visit": 406,
+    "stress_cohort_from_zero_fraction": {
+      "guo_icu": {
+        "n": 1265,
+        "n_positive": 45,
+        "event_rate": 0.03557312252964427
+      },
+      "guo_readmission": {
+        "n": 1455,
+        "n_positive": 167,
+        "event_rate": 0.11477663230240549
+      }
+    }
+  },
+  "copy_forward_strict_pre_prediction_cohort": [
+    {
+      "task": "guo_icu",
+      "n_episodes": 1028,
+      "n_patients": 570,
+      "n_positive": 37,
+      "event_rate": 0.03599221789883268
+    },
+    {
+      "task": "guo_readmission",
+      "n_episodes": 1286,
+      "n_patients": 685,
+      "n_positive": 157,
+      "event_rate": 0.12208398133748057
+    }
+  ],
+  "multiplicity": {
+    "n_comparisons": 60,
+    "nominal_ci_excludes_zero": 12,
+    "survives_holm_005": 3,
+    "survives_bh_005": 7,
+    "p_values_are_approximate": true
+  },
+  "last_episode_validity": [
+    {
+      "task": "guo_icu",
+      "n_examples": 1154,
+      "n_patients": 1154,
+      "n_positive": 45,
+      "event_rate": 0.0389948006932409,
+      "warning": "none"
+    },
+    {
+      "task": "guo_readmission",
+      "n_examples": 1190,
+      "n_patients": 1190,
+      "n_positive": 4,
+      "event_rate": 0.0033613445378151,
+      "warning": "too_few_positive_events_for_stable_comparison"
+    }
+  ],
+  "repository_snapshot": null,
+  "clearml": null,
+  "calibration_bootstrap_requested": 2000,
+  "bootstrap_seed": 20260820
+}

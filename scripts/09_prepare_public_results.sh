@@ -3,10 +3,10 @@ set -euo pipefail
 
 export PYTHONUNBUFFERED=1
 
-: "${EHRSHOT_S3_BASE:=s3://api.blackhole2.ai.innopolis.university:443/pershin-medailab/pershin-medailab/EHR_Risk_Profiling/EHRSHOT}"
-: "${PUBLIC_RESULTS_OUTPUT_DIR:=public_results}"
+: "${EHRSHOT_S3_BASE:=s3://storage.invalid/your-bucket/EHRSHOT}"
+: "${PUBLIC_RESULTS_OUTPUT_DIR:=historical_export_rebuilt}"
 : "${PUBLIC_RESULTS_S3_PREFIX:=}"
-: "${PUBLIC_RESULTS_ENABLE_CLEARML:=1}"
+: "${PUBLIC_RESULTS_ENABLE_CLEARML:=0}"
 
 mkdir -p logs
 
@@ -29,8 +29,8 @@ fi
 if [[ "$PUBLIC_RESULTS_ENABLE_CLEARML" == "1" ]]; then
   args+=(
     --enable-clearml
-    --clearml-project "${CLEARML_PROJECT:-pershin-medailab/EHR_Risk_Profiling/EHRSHOT}"
-    --clearml-output-uri "${CLEARML_OUTPUT_URI:-s3://api.blackhole2.ai.innopolis.university:443/pershin-medailab}"
+    --clearml-project "${CLEARML_PROJECT:-EHRSHOT/State-or-Space}"
+    --clearml-output-uri "${CLEARML_OUTPUT_URI:-s3://storage.invalid/your-bucket}"
     --clearml-task-name "state_or_space_prepare_public_results"
   )
 fi

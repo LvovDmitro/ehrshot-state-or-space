@@ -252,7 +252,7 @@ def safe_auroc(y_true: Any, y_prob: Any) -> float:
 
 def safe_auprc(y_true: Any, y_prob: Any) -> float:
     """
-    AUPRC с защитой от one-class subgroup.
+    AP с защитой от one-class subgroup.
     """
     y_true = np.asarray(y_true).astype(int)
 
@@ -266,7 +266,7 @@ def binary_ranking_metrics(y_true: Any, y_prob: Any) -> dict[str, float]:
     """
     Основные метрики для binary risk prediction.
 
-    AUPRC:
+    AP:
         Основная метрика для несбалансированных задач.
 
     AUROC:

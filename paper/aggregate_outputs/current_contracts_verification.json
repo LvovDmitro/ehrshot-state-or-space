@@ -1,0 +1,14 @@
+{
+  "validated_prediction_rows": 147150,
+  "ensemble_rows": 29430,
+  "exact_seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "maximum_probability_difference": 1.1102230246251565e-16,
+  "training_performed": false,
+  "protected_rows_exported": false
+}

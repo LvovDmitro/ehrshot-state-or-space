@@ -6,6 +6,7 @@ CPU_QUEUE="${CPU_QUEUE:-cpu}"
 REMOTE_ANALYSIS="${REMOTE_ANALYSIS:-1}"
 ANALYSIS_TASK_NAME="${ANALYSIS_TASK_NAME:-state_or_space_final_analysis_5seeds_wide}"
 ANALYSIS_OUTPUT_DIR="${ANALYSIS_OUTPUT_DIR:-ehrshot_state_or_space_final_analysis_5seeds_wide}"
+PREDICTION_RUN_TAGS="${PREDICTION_RUN_TAGS:-core_4096_wide,context_16384_wide,icu_gap_extra_30_180_wide,additional_seeds_45_46_all_wide}"
 
 : "${CLEARML_PROJECT:?Set CLEARML_PROJECT}"
 : "${CLEARML_OUTPUT_URI:?Set CLEARML_OUTPUT_URI}"
@@ -30,7 +31,7 @@ python final_exps/03_analyze_state_or_space.py \
   --predictions-s3-url \
     "$EHRSHOT_S3_BASE/ehrshot_state_or_space_final_sequence_results/combined_5seeds_wide/sequence_multiseed_heldout_predictions_wide.csv" \
   --prediction-run-tags \
-    core_4096_wide,context_16384_wide,icu_gap_extra_30_180_wide,additional_seeds_45_46_all_wide \
+    "$PREDICTION_RUN_TAGS" \
   --prediction-results-dir \
     ehrshot_state_or_space_final_sequence_results \
   --prediction-results-s3-root \

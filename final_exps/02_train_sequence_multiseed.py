@@ -105,8 +105,8 @@ WIDE_PREDICTION_COLUMNS = [
 ]
 
 DEFAULT_CHECKPOINT_S3_PREFIX = (
-    "s3://api.blackhole2.ai.innopolis.university:443/"
-    "pershin-medailab/pershin-medailab/EHR_Risk_Profiling/EHRSHOT/"
+    "s3://storage.invalid/"
+    "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT/"
     "checkpoints"
 )
 
@@ -565,8 +565,8 @@ def parse_args() -> argparse.Namespace:
         "--results-s3-prefix",
         type=str,
         default=(
-            "s3://api.blackhole2.ai.innopolis.university:443/"
-            "pershin-medailab/pershin-medailab/EHR_Risk_Profiling/EHRSHOT/"
+            "s3://storage.invalid/"
+            "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT/"
             "ehrshot_state_or_space_final_sequence_results"
         ),
         help="MinIO/S3 prefix для metrics, predictions, history и configs.",
@@ -692,7 +692,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--clearml-project",
         type=str,
-        default="pershin-medailab/EHR_Risk_Profiling/EHRSHOT",
+        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -702,7 +702,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--clearml-output-uri",
         type=str,
-        default="s3://api.blackhole2.ai.innopolis.university:443/pershin-medailab",
+        default="s3://storage.invalid/anonymous-project",
     )
 
     return parser.parse_args()
@@ -1847,7 +1847,7 @@ def train_model(
     y_train: np.ndarray,
 ) -> tuple[nn.Module, pd.DataFrame, float, int]:
     """
-    Обучает модель с early stopping по tuning AUPRC.
+    Обучает модель с early stopping по tuning AP.
 
     Loss:
         BCEWithLogitsLoss(pos_weight=n_neg / n_pos)

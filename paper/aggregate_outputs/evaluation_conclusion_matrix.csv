@@ -1,0 +1,31 @@
+task,metric,protocol,preference_value,preferred,nominal_ci_excludes_zero,details
+guo_readmission,auroc,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.0043346493
+guo_readmission,auroc,Equal-patient ensemble,1,compressed,False,benefit_delta=0.0059658379
+guo_readmission,auroc,Seed majority,1,compressed,False,compressed=3; raw=2; equal=0
+guo_readmission,auprc,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.010844796
+guo_readmission,auprc,Equal-patient ensemble,1,compressed,False,benefit_delta=0.010594545
+guo_readmission,auprc,Seed majority,1,compressed,False,compressed=3; raw=2; equal=0
+guo_readmission,brier,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.0008828719
+guo_readmission,brier,Equal-patient ensemble,1,compressed,False,benefit_delta=0.00037559198
+guo_readmission,brier,Seed majority,1,compressed,False,compressed=4; raw=1; equal=0
+guo_readmission,logloss,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.0026314449
+guo_readmission,logloss,Equal-patient ensemble,1,compressed,False,benefit_delta=0.0019782854
+guo_readmission,logloss,Seed majority,1,compressed,False,compressed=4; raw=1; equal=0
+guo_readmission,top_10pct_precision,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.01369863
+guo_readmission,top_10pct_precision,Equal-patient ensemble,-1,raw,False,benefit_delta=-0.011147792
+guo_readmission,top_10pct_precision,Seed majority,1,compressed,False,compressed=3; raw=1; equal=1
+guo_icu,auroc,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.006472999
+guo_icu,auroc,Equal-patient ensemble,1,compressed,False,benefit_delta=0.0074904586
+guo_icu,auroc,Seed majority,-1,raw,False,compressed=2; raw=3; equal=0
+guo_icu,auprc,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.0047242893
+guo_icu,auprc,Equal-patient ensemble,1,compressed,False,benefit_delta=0.0053140042
+guo_icu,auprc,Seed majority,-1,raw,False,compressed=2; raw=3; equal=0
+guo_icu,brier,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.00018105578
+guo_icu,brier,Equal-patient ensemble,1,compressed,False,benefit_delta=0.00011857803
+guo_icu,brier,Seed majority,1,compressed,False,compressed=3; raw=2; equal=0
+guo_icu,logloss,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.0018050522
+guo_icu,logloss,Equal-patient ensemble,1,compressed,False,benefit_delta=0.0018777409
+guo_icu,logloss,Seed majority,-1,raw,False,compressed=2; raw=3; equal=0
+guo_icu,top_10pct_precision,Episode-weighted ensemble,1,compressed,False,benefit_delta=0.0049019608
+guo_icu,top_10pct_precision,Equal-patient ensemble,-1,raw,False,benefit_delta=-0.002550165
+guo_icu,top_10pct_precision,Seed majority,1,compressed,False,compressed=3; raw=1; equal=1

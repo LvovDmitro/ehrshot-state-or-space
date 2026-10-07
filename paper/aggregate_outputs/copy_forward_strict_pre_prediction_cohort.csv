@@ -1,0 +1,3 @@
+task,n_episodes,n_patients,n_positive,event_rate
+guo_icu,1028,570,37,0.03599221789883268
+guo_readmission,1286,685,157,0.12208398133748057

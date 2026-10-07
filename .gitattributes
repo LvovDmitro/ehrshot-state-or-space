@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.csv text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.tex text eol=lf whitespace=-trailing-space
+*.bib text eol=lf
+*.sty -text whitespace=-trailing-space
+*.pdf binary
+*.png binary

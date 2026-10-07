@@ -150,6 +150,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-upload", action="store_true")
     parser.add_argument("--enable-clearml", action="store_true")
     parser.add_argument("--execute-remotely", action="store_true")
+    parser.add_argument("--clearml-queue", default=None)
     return parser.parse_args()
 
 
@@ -3068,6 +3069,9 @@ def is_clearml_agent_run() -> bool:
 
 def maybe_init_clearml(args: argparse.Namespace, cfg: dict[str, Any]):
     clearml_cfg = dict(cfg.get("clearml", {}))
+    if args.clearml_queue is not None:
+        clearml_cfg["queue"] = args.clearml_queue
+        cfg["clearml"] = clearml_cfg
     enabled = bool(clearml_cfg.get("enabled", False) or args.enable_clearml)
     remote = is_clearml_agent_run()
     if not enabled and not remote:
@@ -3079,7 +3083,7 @@ def maybe_init_clearml(args: argparse.Namespace, cfg: dict[str, Any]):
     if task is None:
         task = Task.init(
             project_name=clearml_cfg.get(
-                "project", "pershin-medailab/EHR_Risk_Profiling/EHRSHOT"
+                "project", "anonymous-project/EHR_Risk_Profiling/EHRSHOT"
             ),
             task_name=clearml_cfg.get("task_name", cfg["run_set_id"]),
             output_uri=clearml_cfg.get("output_uri") or None,

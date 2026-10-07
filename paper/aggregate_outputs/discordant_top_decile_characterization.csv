@@ -1,0 +1,5 @@
+task,selection_group,n_episodes,n_patients,n_positive,event_rate,n_characterized,characterization_coverage,raw_context_at_4096_fraction,n_existing_mentions_median,n_existing_mentions_q1,n_existing_mentions_q3,candidate_age_days_median,candidate_age_days_q1,candidate_age_days_q3,raw_sequence_length_median,raw_sequence_length_q1,raw_sequence_length_q3
+guo_readmission,raw_only,34,28,10,0.29411764705882354,22,0.6470588235294118,0.9090909090909091,6.0,3.0,21.5,441.5,120.0,1398.8854166666667,4096.0,4096.0,4096.0
+guo_readmission,era_only,34,23,13,0.38235294117647056,28,0.8235294117647058,0.8214285714285714,5.5,3.0,14.25,143.0,65.12118055555555,460.75,4096.0,4096.0,4096.0
+guo_icu,raw_only,51,49,5,0.09803921568627451,21,0.4117647058823529,0.7619047619047619,18.0,4.0,33.0,388.0,112.0,1007.0,4096.0,4096.0,4096.0
+guo_icu,era_only,51,46,6,0.11764705882352941,31,0.6078431372549019,0.5806451612903226,7.0,4.0,16.5,411.4243055555556,155.08819444444444,887.0,4096.0,1873.0,4096.0

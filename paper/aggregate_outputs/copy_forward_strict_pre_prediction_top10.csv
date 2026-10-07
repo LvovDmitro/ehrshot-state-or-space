@@ -1,0 +1,17 @@
+task,compression_version,copy_fraction,top_k,n_overlap,retention_fraction,jaccard,churn_fraction
+guo_icu,condition_era_90_backfill_4096,0.0,103,103,1.0,1.0,0.0
+guo_icu,condition_era_90_backfill_4096,0.25,103,103,1.0,1.0,0.0
+guo_icu,condition_era_90_backfill_4096,0.5,103,102,0.9902912621359223,0.9807692307692307,0.009708737864077669
+guo_icu,condition_era_90_backfill_4096,1.0,103,100,0.970873786407767,0.9433962264150944,0.02912621359223301
+guo_icu,raw_4096,0.0,103,103,1.0,1.0,0.0
+guo_icu,raw_4096,0.25,103,103,1.0,1.0,0.0
+guo_icu,raw_4096,0.5,103,103,1.0,1.0,0.0
+guo_icu,raw_4096,1.0,103,100,0.970873786407767,0.9433962264150944,0.02912621359223301
+guo_readmission,condition_era_90_backfill_4096,0.0,129,129,1.0,1.0,0.0
+guo_readmission,condition_era_90_backfill_4096,0.25,129,129,1.0,1.0,0.0
+guo_readmission,condition_era_90_backfill_4096,0.5,129,129,1.0,1.0,0.0
+guo_readmission,condition_era_90_backfill_4096,1.0,129,128,0.9922480620155039,0.9846153846153847,0.007751937984496124
+guo_readmission,raw_4096,0.0,129,129,1.0,1.0,0.0
+guo_readmission,raw_4096,0.25,129,129,1.0,1.0,0.0
+guo_readmission,raw_4096,0.5,129,129,1.0,1.0,0.0
+guo_readmission,raw_4096,1.0,129,128,0.9922480620155039,0.9846153846153847,0.007751937984496124

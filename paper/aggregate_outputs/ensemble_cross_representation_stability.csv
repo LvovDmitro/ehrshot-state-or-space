@@ -1,0 +1,3 @@
+task,top_k,intersection,ensemble_cross_representation_jaccard,raw_only,era_only
+guo_readmission,219,185,0.7312252964426877,34,34
+guo_icu,204,153,0.6,51,51

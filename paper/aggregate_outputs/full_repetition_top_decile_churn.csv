@@ -1,0 +1,5 @@
+task,compression_version,requested_copy_fraction,top_k,n_entered,n_entered_positive,n_exited,n_exited_positive,n_changed_patients,churn_fraction
+guo_icu,condition_era_90_backfill_4096,1.0,103,3,0,3,0,4,0.02912621359223301
+guo_icu,raw_4096,1.0,103,3,0,3,0,6,0.02912621359223301
+guo_readmission,condition_era_90_backfill_4096,1.0,129,1,1,1,0,2,0.007751937984496124
+guo_readmission,raw_4096,1.0,129,1,0,1,1,2,0.007751937984496124
