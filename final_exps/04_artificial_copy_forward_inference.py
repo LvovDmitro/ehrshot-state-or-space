@@ -246,7 +246,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--clearml-project",
         type=str,
-        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
+        default="EHRSHOT/State-or-Space",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -256,7 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--clearml-output-uri",
         type=str,
-        default="s3://storage.invalid/anonymous-project",
+        default="s3://storage.invalid/your-bucket",
     )
     parser.add_argument(
         "--clearml-tags",

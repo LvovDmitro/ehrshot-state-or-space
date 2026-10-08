@@ -4,7 +4,7 @@
 
 Poster at TAE (Trust-AI-Eval), NeurIPS 2026
 
-[OpenReview](https://openreview.net/forum?id=RffArnWpec) | [Code](https://github.com/LvovDmitro/ehrshot-state-or-space)
+[Paper on OpenReview](https://openreview.net/forum?id=RffArnWpec)
 
 ## Overview
 
@@ -51,7 +51,7 @@ Use a separate Python 3.12 environment with `requirements.txt`.
 The [experiment guide](docs/EXPERIMENTS.md) covers train-only whitelist
 construction, sequence building, multiseed training, and repetition experiments.
 Configure private data and output paths, use fresh caches for changed inputs,
-and supply your own settings for optional storage and tracking.
+and keep restricted inputs and outputs outside version control.
 
 **EHRSHOT requires separate authorized access** under its Credentialed Health
 Data License. Do not redistribute medical-data rows, patient identifiers,

@@ -31,17 +31,10 @@ in a local copy of the dataset configuration. Keep all restricted inputs,
 predictions, caches, and checkpoints outside version control. Start with fresh
 caches and output directories when data or configuration changes.
 
-For optional ClearML/S3 execution, copy `env.example` to `.env`, supply your
-own endpoints and storage locations, configure credentials outside the
-repository, and source the file. The `storage.invalid` addresses are
-placeholders. Dataset creation also reads its storage and tracking settings
-from the JSON configuration; update those locally before remote execution.
-
 ## Local Data Preparation
 
-For a fully local run, first disable `clearml.enabled` in your local dataset
-configuration and set its data and output paths. Then run from the repository
-root, with storage upload disabled:
+The published dataset configuration runs locally with tracking and uploads
+disabled. Set its data and output paths, then run from the repository root:
 
 ```bash
 python final_exps/00_build_train_only_persistent_whitelist.py \
@@ -57,23 +50,29 @@ The fixed persistence rule yielded 239 codes on the study inputs;
 
 ## Training and Evaluation
 
-The stage wrappers support configured ClearML/S3 infrastructure. Select the
-queue suitable for your environment, then run each configuration:
+Train each configuration locally. The first three use seeds 42-44; the fourth
+adds seeds 45-46 to every final task-representation pair. The output directory
+names match those expected by the analysis stage:
 
 ```bash
-RUN_CONFIG=configs/state_or_space_core_4096_runs.json \
-  bash scripts/03_run_training_clearml.sh
-RUN_CONFIG=configs/state_or_space_context_16384_runs.json \
-  bash scripts/03_run_training_clearml.sh
-RUN_CONFIG=configs/state_or_space_icu_gap_extra_runs.json \
-  bash scripts/03_run_training_clearml.sh
-RUN_CONFIG=configs/state_or_space_additional_seeds_45_46_runs.json \
-  bash scripts/03_run_training_clearml.sh
-bash scripts/04_run_analysis_clearml.sh
+for pair in \
+  state_or_space_core_4096_runs:core_4096_wide \
+  state_or_space_context_16384_runs:context_16384_wide \
+  state_or_space_icu_gap_extra_runs:icu_gap_extra_30_180_wide \
+  state_or_space_additional_seeds_45_46_runs:additional_seeds_45_46_all_wide
+do
+  python final_exps/02_train_sequence_multiseed.py \
+    --run-config "configs/${pair%%:*}.json" \
+    --sequence-data-dir ehrshot_state_or_space_sequence_datasets \
+    --output-dir "ehrshot_state_or_space_final_sequence_results/${pair#*:}" \
+    --checkpoint-dir checkpoints --skip-checkpoint-upload \
+    --results-s3-prefix "" --device auto
+done
+python final_exps/03_analyze_state_or_space.py \
+  --skip-upload --skip-combined-upload
 ```
 
-For direct local training, use `final_exps/02_train_sequence_multiseed.py`;
-its `--help` lists data, device, checkpoint, and output options. The repetition
+Each stage's `--help` lists data, device, checkpoint, and output options. The repetition
 stages are `final_exps/04_artificial_copy_forward_inference.py` and
 `final_exps/05_analyze_copy_forward_robustness.py`. These stages use frozen
 models and do not retrain them.
@@ -95,6 +94,4 @@ python paper/analysis/matched_stability_and_shift_profiles.py \
 The performance bootstrap uses 10,000 patient-cluster draws; calibration uses
 2,000. Seeds change initialization on the same training sample and split.
 The published analysis conditions on fitted pipelines and a cohort reused
-during development. The original MEDS archive checksum was not retained;
-cohort counts, split checks, and derived-artifact hashes provide the available
-reference identity. See the paper for the complete experimental protocol.
+during development. See the paper for the complete experimental protocol.

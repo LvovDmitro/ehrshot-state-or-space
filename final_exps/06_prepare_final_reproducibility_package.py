@@ -37,7 +37,7 @@ import pandas as pd
 
 S3_BASE = (
     "s3://storage.invalid/"
-    "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT"
+    "your-bucket/EHRSHOT"
 )
 SCRIPT_VERSION = "state-or-space-repro-package-v1-20260724"
 
@@ -215,12 +215,12 @@ def parse_args() -> argparse.Namespace:
         "--clearml-tasks-file",
         type=Path,
         default=None,
-        help="Optional CSV prepared by scripts/08_record_provenance.sh.",
+        help="Optional local CSV mapping experiment stages to task identifiers.",
     )
     parser.add_argument("--enable-clearml", action="store_true")
     parser.add_argument(
         "--clearml-project",
-        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
+        default="EHRSHOT/State-or-Space",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -228,7 +228,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--clearml-output-uri",
-        default="s3://storage.invalid/anonymous-project",
+        default="s3://storage.invalid/your-bucket",
     )
     parser.add_argument(
         "--clearml-tags",
@@ -441,7 +441,7 @@ def copy_repository_snapshot(args: argparse.Namespace, package_root: Path) -> No
             raise FileNotFoundError(source)
         shutil.copytree(source, code_root / folder, dirs_exist_ok=True, ignore=ignore)
 
-    for name in ["requirements.txt", "README.md", "ARTIFACTS.md", ".env.example", ".gitignore"]:
+    for name in ["requirements.txt", "requirements-public.txt", "README.md", "env.example", ".gitignore"]:
         source = repo_root / name
         if source.exists():
             copy_file_atomic(source, code_root / name)

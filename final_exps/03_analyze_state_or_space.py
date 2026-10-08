@@ -40,7 +40,7 @@ from common_ehrshot_eval import binary_ranking_metrics, topk_metrics
 
 S3_BASE = (
     "s3://storage.invalid/"
-    "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT"
+    "your-bucket/EHRSHOT"
 )
 
 PREDICTIVE_METRICS = [
@@ -165,7 +165,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clearml-queue", default="cpu")
     parser.add_argument(
         "--clearml-project",
-        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
+        default="EHRSHOT/State-or-Space",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -173,7 +173,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--clearml-output-uri",
-        default="s3://storage.invalid/anonymous-project",
+        default="s3://storage.invalid/your-bucket",
     )
     return parser.parse_args()
 

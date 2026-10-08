@@ -106,7 +106,7 @@ WIDE_PREDICTION_COLUMNS = [
 
 DEFAULT_CHECKPOINT_S3_PREFIX = (
     "s3://storage.invalid/"
-    "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT/"
+    "your-bucket/EHRSHOT/"
     "checkpoints"
 )
 
@@ -566,7 +566,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=(
             "s3://storage.invalid/"
-            "anonymous-project/anonymous-project/EHR_Risk_Profiling/EHRSHOT/"
+            "your-bucket/EHRSHOT/"
             "ehrshot_state_or_space_final_sequence_results"
         ),
         help="MinIO/S3 prefix для metrics, predictions, history и configs.",
@@ -692,7 +692,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--clearml-project",
         type=str,
-        default="anonymous-project/EHR_Risk_Profiling/EHRSHOT",
+        default="EHRSHOT/State-or-Space",
     )
     parser.add_argument(
         "--clearml-task-name",
@@ -702,7 +702,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--clearml-output-uri",
         type=str,
-        default="s3://storage.invalid/anonymous-project",
+        default="s3://storage.invalid/your-bucket",
     )
 
     return parser.parse_args()

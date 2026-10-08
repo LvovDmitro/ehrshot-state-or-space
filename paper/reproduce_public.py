@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import hashlib
 from pathlib import Path
 import shutil
 import sys
@@ -18,27 +16,11 @@ from generate_evaluation_profile_figure import render as render_profile
 from tae_submission_analysis import plot_calibration
 
 
-def verify_manifest(root: Path) -> int:
-    manifest = root / "RELEASE_MANIFEST.csv"
-    if not manifest.exists():
-        raise ValueError("Missing release manifest")
-    count = 0
-    with manifest.open(encoding="utf-8", newline="") as handle:
-        for row in csv.DictReader(handle):
-            path = (root / row["relative_path"]).resolve()
-            if not path.is_relative_to(root.resolve()) or not path.is_file():
-                raise ValueError("Missing or unsafe manifest entry")
-            actual = hashlib.sha256(path.read_bytes()).hexdigest()
-            if actual.lower() != row["sha256"].lower():
-                raise ValueError(f"Checksum mismatch: {row['relative_path']}")
-            count += 1
-    return count
-
-
 def verify_aggregates(directory: Path) -> dict:
     for path in directory.glob("*.csv"):
         columns = set(pd.read_csv(path, nrows=0).columns)
-        if columns & {"row_id", "subject_id", "patient_id", "candidate_code", "prediction_time"}:
+        if columns & {"row_id", "example_id", "subject_id", "patient_id", "candidate_code",
+                      "prediction_time", "y_true", "pred_proba", "risk_calibrated", "logit"}:
             raise ValueError(f"Restricted columns in {path.name}")
     primary = pd.read_csv(directory / "multiplicity_sensitivity.csv")
     primary = primary[primary.comparison == "Full4096"]
@@ -77,7 +59,6 @@ def main() -> None:
     inputs = ROOT / "paper" / "aggregate_outputs"
     if output == ROOT or output == inputs.resolve() or inputs.resolve().is_relative_to(output):
         raise ValueError("Output must not overwrite source inputs")
-    verify_manifest(ROOT)
     verify_aggregates(inputs)
     output.mkdir(parents=True, exist_ok=True)
     tables = output / "tables"

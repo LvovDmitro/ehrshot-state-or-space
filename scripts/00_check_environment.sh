@@ -29,7 +29,6 @@ required = [
     Path("scripts/05_run_copy_forward_inference_mps.sh"),
     Path("scripts/06_run_copy_forward_analysis.sh"),
     Path("scripts/07_prepare_reproducibility_package.sh"),
-    Path("scripts/08_record_provenance.sh"),
     Path("scripts/09_prepare_public_results.sh"),
     Path("configs/state_or_space_sequence_datasets.json"),
     Path("configs/state_or_space_core_4096_runs.json"),
@@ -139,7 +138,6 @@ for script in \
   scripts/05_run_copy_forward_inference_mps.sh \
   scripts/06_run_copy_forward_analysis.sh \
   scripts/07_prepare_reproducibility_package.sh \
-  scripts/08_record_provenance.sh \
   scripts/09_prepare_public_results.sh; do
   bash -n "$script"
 done

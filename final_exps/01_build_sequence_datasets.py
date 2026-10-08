@@ -3083,7 +3083,7 @@ def maybe_init_clearml(args: argparse.Namespace, cfg: dict[str, Any]):
     if task is None:
         task = Task.init(
             project_name=clearml_cfg.get(
-                "project", "anonymous-project/EHR_Risk_Profiling/EHRSHOT"
+                "project", "EHRSHOT/State-or-Space"
             ),
             task_name=clearml_cfg.get("task_name", cfg["run_set_id"]),
             output_uri=clearml_cfg.get("output_uri") or None,
