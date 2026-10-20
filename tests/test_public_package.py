@@ -21,6 +21,23 @@ def test_readme_local_links_and_images_exist():
             assert (ROOT / link.split("#", 1)[0]).exists(), link
 
 
+def test_readme_section_links_resolve():
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    headings = re.findall(r"^#{1,6}\s+(.+)$", text, re.MULTILINE)
+    anchors = {re.sub(r"[^\w\- ]", "", title.lower()).replace(" ", "-")
+               for title in headings}
+    for anchor in re.findall(r"\]\(#([^)]+)\)", text):
+        assert anchor in anchors, anchor
+
+
+def test_readme_links_to_the_official_presentation_and_preserves_authors():
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "https://neurips.cc/virtual/2026/178289" in text
+    assert "https://openreview.net/forum?id=RffArnWpec" in text
+    authors = ["Polina Korobeinikova", "Dmitry Lvov", "Ilya Pershin"]
+    assert sorted(authors, key=text.index) == authors
+
+
 def test_public_aggregates_validate():
     result = public.verify_aggregates(ROOT / "paper/aggregate_outputs")
     assert result["primary_comparisons"] == 10
